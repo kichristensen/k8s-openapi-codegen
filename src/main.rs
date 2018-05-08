@@ -1,4 +1,4 @@
-#![feature(catch_expr, conservative_impl_trait, proc_macro)]
+#![feature(proc_macro)]
 
 #![cfg_attr(feature = "cargo-clippy", deny(clippy, clippy_pedantic))]
 #![cfg_attr(feature = "cargo-clippy", allow(
@@ -50,8 +50,19 @@ fn main() {
 		builder.init();
 	}
 
-	let result: Result<()> = do catch {
-		use std::io::Write;
+	let result = generate_bindings();
+
+	#[cfg_attr(feature = "cargo-clippy", allow(print_stdout))]
+	{
+		if let Err(err) = result {
+			println!("{}", err);
+			std::process::exit(1);
+		}
+	}
+}
+
+fn generate_bindings() -> Result<()> {
+	use std::io::Write;
 
 		let mut args = std::env::args_os().skip(1);
 		let input: std::path::PathBuf = args.next().ok_or("expected input file parameter")?.into();
@@ -299,15 +310,6 @@ fn main() {
 		}
 
 		Ok(())
-	};
-
-	#[cfg_attr(feature = "cargo-clippy", allow(print_stdout))]
-	{
-		if let Err(err) = result {
-			println!("{}", err);
-			std::process::exit(1);
-		}
-	}
 }
 
 fn create_file_for_type(
